@@ -38,7 +38,14 @@ from mycroft.util.format import nice_number
 # resolve_resource_file, wait_while_speaking
 from mycroft.util.log import LOG
 from mycroft.util.parse import extract_datetime, extract_number, normalize
-from mycroft.util.signal import ensure_directory_exists
+# TODO: Other modules import signals functions from here, make consistent
+from mycroft.util.signal import (
+    create_file,
+    check_for_signal,
+    create_signal,
+    ensure_directory_exists,
+    get_ipc_directory
+)
 
 
 def resolve_resource_file(res_name):

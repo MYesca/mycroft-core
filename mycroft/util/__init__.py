@@ -20,6 +20,7 @@ import os
 import re
 import signal as sig
 import subprocess
+import tempfile
 from copy import deepcopy
 from stat import S_ISREG, ST_MTIME, ST_MODE, ST_SIZE
 from threading import Thread

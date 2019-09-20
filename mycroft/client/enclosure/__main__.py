@@ -32,6 +32,10 @@ def main():
         LOG.debug("Creating Mark II Enclosure")
         from mycroft.client.enclosure.mark2 import EnclosureMark2
         enclosure = EnclosureMark2()
+    elif platform == "emilia":
+        LOG.debug("Creating Emilia Enclosure")
+        from mycroft.client.enclosure.emilia import EnclosureEmilia
+        enclosure = EnclosureEmilia()
     else:
         LOG.debug("Creating generic enclosure, platform='{}'".format(platform))
 

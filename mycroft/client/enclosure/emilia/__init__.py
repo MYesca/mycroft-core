@@ -53,18 +53,19 @@ class EnclosurePrinter(Thread):
         self.daemon = True
         self.bus = bus
         self.chuncks = Queue(size)
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(pBusy, GPIO.IN)
-        GPIO.setup(pLatch, GPIO.OUT, GPIO.HIGH)
-        GPIO.setup(sClock, GPIO.OUT, GPIO.LOW)
-        GPIO.setup(sData, GPIO.OUT, GPIO.LOW)
-        GPIO.setup(sLatch, GPIO.OUT, GPIO.HIGH)
         self.bus.on("mycroft.stop", self.stop)
-
+        LOG.debug("Starting printer thread")
         self.start()
 
     def flush(self):
         try:
+            GPIO.setmode(GPIO.BOARD)
+            GPIO.setup(pBusy, GPIO.IN)
+            GPIO.setup(pLatch, GPIO.OUT, GPIO.HIGH)
+            GPIO.setup(sClock, GPIO.OUT, GPIO.LOW)
+            GPIO.setup(sData, GPIO.OUT, GPIO.LOW)
+            GPIO.setup(sLatch, GPIO.OUT, GPIO.HIGH)
+
             while self.alive:
                 try:
                     chunck = self.chuncks.get() + '\n'
@@ -103,6 +104,7 @@ class EnclosurePrinter(Thread):
         GPIO.output(pLatch, GPIO.HIGH)
 
     def print(self, chunck):
+        LOG.debug("Puting a chunck in the queue.")
         self.chuncks.put(chunck)
 
     def stop(self):
@@ -164,6 +166,7 @@ class EnclosureEmilia(Enclosure):
 
     def on_printText(self, event=None):
         text = event.data["text"]
+        LOG.debug("Printing: {0}".format(text))
         self.printer.print(text.encode("ascii", "replace"))
 
     def on_printFile(self, event=None):

@@ -68,7 +68,7 @@ class EnclosurePrinter(Thread):
 
             while self.alive:
                 try:
-                    chunck = self.chuncks.get() + '\n'
+                    chunck = self.chuncks.get()
                     self.__write__(chunck)
                     self.chuncks.task_done()
                 except Exception as e:

@@ -72,7 +72,7 @@ class EnclosurePrinter(Thread):
                     self.__write__(chunck)
                     self.chuncks.task_done()
                 except Exception as e:
-                    LOG.error("Writing error: {0}".format(e))
+                    LOG.error("Unqueueing error: {0}".format(e))
         finally:
             GPIO.output(sData, GPIO.LOW)
             GPIO.output(sClock, GPIO.LOW)
@@ -81,8 +81,11 @@ class EnclosurePrinter(Thread):
             GPIO.cleanup()
 
     def __write__(self, chunck):
-        for byte in chunck:
-            self.__writeByte__(byte)
+        try:
+            for byte in chunck:
+                self.__writeByte__(byte)
+        except Exception as e:
+            LOG.error("Writing error: {0}".format(e))
 
     def __writeByte__(self, value):   # MSB out first!
         while GPIO.input(pBusy) == GPIO.HIGH:
@@ -167,7 +170,9 @@ class EnclosureEmilia(Enclosure):
     def on_printText(self, event=None):
         text = event.data["text"]
         LOG.debug("Printing: {0}".format(text))
-        self.printer.print(text.encode("ascii", "replace"))
+        chunck = bytearray(text, 'ascii')
+        LOG.debug("Size: {0}".format(len(chunck)))
+        self.printer.print(chunck)
 
     def on_printFile(self, event=None):
         with open(event.data["file"], mode="rb") as f:

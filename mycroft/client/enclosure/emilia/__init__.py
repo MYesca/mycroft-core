@@ -107,7 +107,6 @@ class EnclosurePrinter(Thread):
         GPIO.output(pLatch, GPIO.HIGH)
 
     def print(self, chunck):
-        LOG.debug("Puting a chunck in the queue.")
         self.chuncks.put(chunck)
 
     def stop(self):
@@ -168,10 +167,9 @@ class EnclosureEmilia(Enclosure):
             self.bus.emit(Message('system.wifi.setup', {'lang': self.lang}))
 
     def on_printText(self, event=None):
-        text = event.data["text"]
+        text = event.data["text"] + ('\n\r' if event.data["crlf"] else '')
         LOG.debug("Printing: {0}".format(text))
-        chunck = bytearray(text, 'ascii')
-        LOG.debug("Size: {0}".format(len(chunck)))
+        chunck = bytearray(text, 'cp850', 'replace')
         self.printer.print(chunck)
 
     def on_printFile(self, event=None):

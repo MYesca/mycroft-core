@@ -296,26 +296,26 @@ class EnclosureAPI:
         """Disable movement of the mouth with speech"""
         self.bus.emit(Message('enclosure.mouth.events.deactivate'))
 
-    def print_text(self, text, options={}):
+    def print_text(self, text, crlf=True, fancy=False):
         """Prints text with options
 
         Args:
             text (str): the text
-            options.crlf (bool): append a line feed and carry return
-            options.fancy (bool): print with a nice font
+            crlf (bool): append a line feed and carry return
+            fancy (bool): print with a nice font
         """
         self.bus.emit(Message('enclosure.printer.print.text',
-                              {'text': text, 'options': options}))
+                              {'text': text, 'crlf': crlf, 'fancy': fancy}))
 
-    def print_file(self, file, options={}):
+    def print_file(self, file, fancy=False):
         """Prints a file with options
 
         Args:
             file (str): the full path to the text file
-            options.fancy (bool): print with a nice font
+            fancy (bool): print with a nice font
         """
         self.bus.emit(Message('enclosure.printer.print.file',
-                              {'file': file, 'options': options}))
+                              {'file': file, 'fancy': fancy}))
 
     def print_command(self, cmd):
         """Sends a command to the printer

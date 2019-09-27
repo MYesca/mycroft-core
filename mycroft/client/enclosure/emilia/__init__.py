@@ -42,8 +42,23 @@ sLatch = 21             # serial latch   PA16
 
 
 class PrinterCommand(Flag):
-    LETTER = auto()
-    UNDERLINE = auto()
+    LETTER_ON = auto()
+    LETTER_OFF = auto()
+    UNDERLINE_ON = auto()
+    UNDERLINE_OFF = auto()
+    SUPERSCRIPT_ON = auto()
+    SUPERSCRIPT_OFF = auto()
+    SUBSCRIPT_ON = auto()
+    SUBSCRIPT_OFF = auto()
+    CONDENSED_ON = auto()
+    CONDENSED_OFF = auto()
+    EXPANDED1_ON = auto()
+    EXPANDED1_OFF = auto()
+    EXPANDED2_ON = auto()
+    EXPANDED2_OFF = auto()
+    EXPANDED3_ON = auto()
+    EXPANDED3_OFF = auto()
+    RESET = auto()
 
 
 class EnclosurePrinter(Thread):
@@ -115,6 +130,45 @@ class EnclosurePrinter(Thread):
 
     def print(self, chunck):
         self.chuncks.put(chunck)
+    
+    def command(self, cmd):
+        if cmd == PrinterCommand.LETTER_ON:
+            chunck = b'\x1B\x47'
+        if cmd == PrinterCommand.LETTER_OFF:
+            chunck = b'\x1B\x48'
+        elif cmd == PrinterCommand.UNDERLINE_ON:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.UNDERLINE_OFF:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.SUPERSCRIPT_ON:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.SUPERSCRIPT_OFF:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.SUBSCRIPT_ON:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.SUBSCRIPT_OFF:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.CONDENSED_ON:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.CONDENSED_OFF:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.EXPANDED1_ON:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.EXPANDED1_OFF:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.EXPANDED2_ON:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.EXPANDED2_OFF:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.EXPANDED3_ON:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.EXPANDED3_OFF:
+            chunck = b'\x1B\x47'
+        elif cmd == PrinterCommand.RESET:
+            chunck = b'\x1B'
+        else:
+            chunck = b'\x07'
+        self.chuncks.put(chunck)
 
     def stop(self):
         self.alive = False
@@ -132,6 +186,7 @@ class EnclosureEmilia(Enclosure):
         super().__init__()
 
         self.printer = EnclosurePrinter(self.bus)
+        self.printer.command(PrinterCommand.RESET)
 
         # Notifications from mycroft-core
         self.bus.on("enclosure.notify.no_internet", self.on_no_internet)
@@ -165,10 +220,9 @@ class EnclosureEmilia(Enclosure):
         # TODO: This should go into EnclosureMark1 subclass of Enclosure.
         if has_been_paired():
             # Handle the translation within that code.
-            self.bus.emit(Message("speak", {
-                'utterance': "This device is not connected to the Internet. "
-                             "Either plug in a network cable or set up your "
-                             "wifi connection."}))
+            self.speak("This device is not connected to the Internet. "
+                       "Either plug in a network cable or set up your "
+                       "wifi connection.")
         else:
             # enter wifi-setup mode automatically
             self.bus.emit(Message('system.wifi.setup', {'lang': self.lang}))
@@ -177,21 +231,22 @@ class EnclosureEmilia(Enclosure):
         text = event.data["text"] + ('\n\r' if event.data["crlf"] else '')
         LOG.debug("Printing: {0}".format(text))
 
-        if event.data["fancy"]: self.printer.print(b'\x1b\x47')
+        if event.data["fancy"]: self.printer.command(PrinterCommand.LETTER_ON)
         chunck = bytearray(text, 'cp850', 'replace')
         self.printer.print(chunck)
-        if event.data["fancy"]: self.printer.print(b'\x1b\x48')
+        if event.data["fancy"]: self.printer.command(PrinterCommand.LETTER_OFF)
 
     def on_printFile(self, event=None):
+        if event.data["fancy"]: self.printer.command(PrinterCommand.LETTER_ON)
         with open(event.data["file"], mode="rb") as f:
             chunck = f.read(1000)
             while chunck:
                 self.printer.print(chunck)
                 chunck = f.read(1000)
+        if event.data["fancy"]: self.printer.command(PrinterCommand.LETTER_OFF)
 
     def on_printerCommand(self, event=None):
-        chunck = event.data["cmd"]
-        self.printer.print(chunck)
+        self.printer.command(event.data["cmd"])
 
     def speak(self, text):
         self.bus.emit(Message("speak", {'utterance': text}))

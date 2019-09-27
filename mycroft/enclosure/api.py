@@ -14,6 +14,7 @@
 #
 from .display_manager import DisplayManager
 from mycroft.messagebus.message import Message
+from mycroft.client.enclosure.emilia import PrinterCommand
 
 
 '''
@@ -321,7 +322,8 @@ class EnclosureAPI:
         """Sends a command to the printer
 
         Args:
-            cmd (enum): TBD
+            cmd (PrinterCommand): enum
         """
-        self.bus.emit(Message('enclosure.printer.command',
-                              {'cmd': cmd}))
+        if cmd is PrinterCommand:
+            self.bus.emit(Message('enclosure.printer.command',
+                                {'cmd': cmd}))

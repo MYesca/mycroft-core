@@ -30,6 +30,8 @@ from mycroft.util import connected
 from mycroft.util.log import LOG
 from queue import Queue
 import OPi.GPIO as GPIO
+from enum import Flag, auto
+
 # import mycroft.client.enclosure.emilia.printer as printer
 
 pBusy = 5               # parallel busy  PA11
@@ -37,6 +39,11 @@ pLatch = 3              # parallel latch PA12
 sClock = 23             # serial clock   PA14
 sData = 19              # serial data    PA15
 sLatch = 21             # serial latch   PA16
+
+
+class PrinterCommand(Flag):
+    LETTER = auto()
+    UNDERLINE = auto()
 
 
 class EnclosurePrinter(Thread):
@@ -169,8 +176,11 @@ class EnclosureEmilia(Enclosure):
     def on_printText(self, event=None):
         text = event.data["text"] + ('\n\r' if event.data["crlf"] else '')
         LOG.debug("Printing: {0}".format(text))
+
+        if event.data["fancy"]: self.printer.print(b'\x1b\x47')
         chunck = bytearray(text, 'cp850', 'replace')
         self.printer.print(chunck)
+        if event.data["fancy"]: self.printer.print(b'\x1b\x48')
 
     def on_printFile(self, event=None):
         with open(event.data["file"], mode="rb") as f:

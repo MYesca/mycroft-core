@@ -32,8 +32,6 @@ from queue import Queue
 import OPi.GPIO as GPIO
 from enum import Flag, auto
 
-# import mycroft.client.enclosure.emilia.printer as printer
-
 pBusy = 5               # parallel busy  PA11
 pLatch = 3              # parallel latch PA12
 sClock = 23             # serial clock   PA14
@@ -42,6 +40,8 @@ sLatch = 21             # serial latch   PA16
 
 
 class PrinterCommand(Flag):
+    RESET = auto()
+    NEW_LINE = auto()
     LETTER_ON = auto()
     LETTER_OFF = auto()
     UNDERLINE_ON = auto()
@@ -52,13 +52,8 @@ class PrinterCommand(Flag):
     SUBSCRIPT_OFF = auto()
     CONDENSED_ON = auto()
     CONDENSED_OFF = auto()
-    EXPANDED1_ON = auto()
-    EXPANDED1_OFF = auto()
-    EXPANDED2_ON = auto()
-    EXPANDED2_OFF = auto()
-    EXPANDED3_ON = auto()
-    EXPANDED3_OFF = auto()
-    RESET = auto()
+    EXPANDED_ON = auto()
+    EXPANDED_OFF = auto()
 
 
 class EnclosurePrinter(Thread):
@@ -106,6 +101,7 @@ class EnclosurePrinter(Thread):
         try:
             for byte in chunck:
                 self.__writeByte__(byte)
+                sleep(0.01)
         except Exception as e:
             LOG.error("Writing error: {0}".format(e))
 
@@ -132,43 +128,39 @@ class EnclosurePrinter(Thread):
         self.chuncks.put(chunck)
     
     def command(self, cmd):
-        if cmd == PrinterCommand.LETTER_ON:
+        if cmd == PrinterCommand.RESET:
+            chunck = b'\x1B\x40\x1B\x51\x50'
+        elif cmd == PrinterCommand.NEW_LINE:
+            chunck = b'\x0A'
+        elif cmd == PrinterCommand.LETTER_ON:
             chunck = b'\x1B\x47'
-        if cmd == PrinterCommand.LETTER_OFF:
+        elif cmd == PrinterCommand.LETTER_OFF:
             chunck = b'\x1B\x48'
         elif cmd == PrinterCommand.UNDERLINE_ON:
-            chunck = b'\x1B\x47'
+            chunck = b'\x1B\x5F\x01'
         elif cmd == PrinterCommand.UNDERLINE_OFF:
-            chunck = b'\x1B\x47'
+            chunck = b'\x1B\x5F\x00'
         elif cmd == PrinterCommand.SUPERSCRIPT_ON:
-            chunck = b'\x1B\x47'
+            chunck = b'\x1B\x53\x00'
         elif cmd == PrinterCommand.SUPERSCRIPT_OFF:
-            chunck = b'\x1B\x47'
+            chunck = b'\x1B\x54'
         elif cmd == PrinterCommand.SUBSCRIPT_ON:
-            chunck = b'\x1B\x47'
+            chunck = b'\x1B\x53\x01'
         elif cmd == PrinterCommand.SUBSCRIPT_OFF:
-            chunck = b'\x1B\x47'
+            chunck = b'\x1B\x54'
         elif cmd == PrinterCommand.CONDENSED_ON:
-            chunck = b'\x1B\x47'
+            chunck = b'\x0F'
         elif cmd == PrinterCommand.CONDENSED_OFF:
-            chunck = b'\x1B\x47'
-        elif cmd == PrinterCommand.EXPANDED1_ON:
-            chunck = b'\x1B\x47'
-        elif cmd == PrinterCommand.EXPANDED1_OFF:
-            chunck = b'\x1B\x47'
-        elif cmd == PrinterCommand.EXPANDED2_ON:
-            chunck = b'\x1B\x47'
-        elif cmd == PrinterCommand.EXPANDED2_OFF:
-            chunck = b'\x1B\x47'
-        elif cmd == PrinterCommand.EXPANDED3_ON:
-            chunck = b'\x1B\x47'
-        elif cmd == PrinterCommand.EXPANDED3_OFF:
-            chunck = b'\x1B\x47'
-        elif cmd == PrinterCommand.RESET:
-            chunck = b'\x1B'
+            chunck = b'\x12'
+        elif cmd == PrinterCommand.EXPANDED_ON:
+            chunck = b'\x1B\x57\x01'
+        elif cmd == PrinterCommand.EXPANDED_OFF:
+            chunck = b'\x1B\x57\x00'
         else:
-            chunck = b'\x07'
-        self.chuncks.put(chunck)
+            chunck = None
+
+        if chunck != None:
+            self.chuncks.put(chunck)
 
     def stop(self):
         self.alive = False
@@ -228,25 +220,23 @@ class EnclosureEmilia(Enclosure):
             self.bus.emit(Message('system.wifi.setup', {'lang': self.lang}))
 
     def on_printText(self, event=None):
-        text = event.data["text"] + ('\n\r' if event.data["crlf"] else '')
-        LOG.debug("Printing: {0}".format(text))
-
+        text = event.data["text"]
         if event.data["fancy"]: self.printer.command(PrinterCommand.LETTER_ON)
-        chunck = bytearray(text, 'cp850', 'replace')
-        self.printer.print(chunck)
+        if event.data["expanded"]: self.printer.command(PrinterCommand.EXPANDED_ON)
+        self.printer.print(bytearray(text, 'cp850', 'replace'))
+        if event.data["expanded"]: self.printer.command(PrinterCommand.EXPANDED_OFF)
         if event.data["fancy"]: self.printer.command(PrinterCommand.LETTER_OFF)
+        if event.data["crlf"]: self.printer.command(PrinterCommand.NEW_LINE)
 
     def on_printFile(self, event=None):
-        if event.data["fancy"]: self.printer.command(PrinterCommand.LETTER_ON)
         with open(event.data["file"], mode="rb") as f:
             chunck = f.read(1000)
             while chunck:
                 self.printer.print(chunck)
                 chunck = f.read(1000)
-        if event.data["fancy"]: self.printer.command(PrinterCommand.LETTER_OFF)
 
     def on_printerCommand(self, event=None):
-        self.printer.command(event.data["cmd"])
+        self.printer.command(PrinterCommand[event.data["cmd"]])
 
     def speak(self, text):
         self.bus.emit(Message("speak", {'utterance': text}))

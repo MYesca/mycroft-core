@@ -15,6 +15,7 @@
 from .display_manager import DisplayManager
 from mycroft.messagebus.message import Message
 from mycroft.client.enclosure.emilia import PrinterCommand
+from mycroft.util.log import LOG
 
 
 '''
@@ -297,26 +298,26 @@ class EnclosureAPI:
         """Disable movement of the mouth with speech"""
         self.bus.emit(Message('enclosure.mouth.events.deactivate'))
 
-    def print_text(self, text, crlf=True, fancy=False):
+    def print_text(self, text, crlf=True, fancy=False, expanded=False):
         """Prints text with options
 
         Args:
             text (str): the text
             crlf (bool): append a line feed and carry return
             fancy (bool): print with a nice font
+            expanded (bool): print with a expanded font
         """
         self.bus.emit(Message('enclosure.printer.print.text',
-                              {'text': text, 'crlf': crlf, 'fancy': fancy}))
+                              {'text': text, 'crlf': crlf, 'fancy': fancy, 'expanded': expanded}))
 
-    def print_file(self, file, fancy=False):
+    def print_file(self, file):
         """Prints a file with options
 
         Args:
             file (str): the full path to the text file
-            fancy (bool): print with a nice font
         """
         self.bus.emit(Message('enclosure.printer.print.file',
-                              {'file': file, 'fancy': fancy}))
+                              {'file': file}))
 
     def print_command(self, cmd):
         """Sends a command to the printer
@@ -324,6 +325,7 @@ class EnclosureAPI:
         Args:
             cmd (PrinterCommand): enum
         """
-        if cmd is PrinterCommand:
-            self.bus.emit(Message('enclosure.printer.command',
-                                {'cmd': cmd}))
+        # if cmd is PrinterCommand:
+        # LOG.debug("Sending command: {0}".format(cmd.name))
+        self.bus.emit(Message('enclosure.printer.command',
+                            {'cmd': cmd.name}))

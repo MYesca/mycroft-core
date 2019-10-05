@@ -129,7 +129,7 @@ class EnclosurePrinter(Thread):
     
     def command(self, cmd):
         if cmd == PrinterCommand.RESET:
-            chunck = b'\x1B\x40\x1B\x51\x50'
+            chunck = b'\x1B\x40\x1B\x51\x50' #\x1B\x43\x5A form size 90
         elif cmd == PrinterCommand.NEW_LINE:
             chunck = b'\x0A'
         elif cmd == PrinterCommand.LETTER_ON:

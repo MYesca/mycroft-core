@@ -18,8 +18,11 @@ TO DO list
 - Integrate the Centronix connector
 - Integrate into the matrix printer
 - Port to Portuguese
-- Change hotword to Hey Emilia
-- Create skills for a printer
+
+
+2020-02-05
+- (OK) Change hotword to Hey Emilia
+- (OK) Create skills for a printer
 
 
 2019-09-14

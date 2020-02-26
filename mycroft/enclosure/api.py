@@ -14,7 +14,7 @@
 #
 from .display_manager import DisplayManager
 from mycroft.messagebus.message import Message
-from mycroft.client.enclosure.emilia import PrinterCommand
+from mycroft.client.enclosure.emilia.printer import PrinterCommand
 from mycroft.util.log import LOG
 
 
@@ -311,7 +311,7 @@ class EnclosureAPI:
                               {'text': text, 'crlf': crlf, 'fancy': fancy, 'expanded': expanded}))
 
     def print_file(self, file):
-        """Prints a file with options
+        """Prints a file
 
         Args:
             file (str): the full path to the text file

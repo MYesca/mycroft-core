@@ -401,7 +401,7 @@ class SkillSettings(dict):
             request settings and store it if it changes
             TODO: implement as websocket
         """
-        delay = 1
+        delay = 10
         original = hash(str(self))
         try:
             if not is_paired():
